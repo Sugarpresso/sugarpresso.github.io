@@ -1,0 +1,19 @@
+import requests
+from bs4 import BeautifulSoup
+
+def print_stock_price(df, code, page, totalpage = None) :
+    url = 'https://finance.naver.com/item/sise_day.nhn?code=%s&page=%s'%(code, page)
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    pageselect = soup.select('td[class="pgRR"] > a')
+    print(page, len(df))
+    page += 1
+    table = pd.read_html(r.text)[0].drop('전일비', axis=1).dropna(axis=0)
+    df = df.append(table, ignore_index='True')
+    if totalpage is None :
+        totalpage = pageselect[0]['href'].split('page=')[1]
+    if int(page) > int(totalpage) :
+        pass
+    else :
+        totalpage = pageselect[0]['href'].split('page=')[1]        
+    return print_stock_price(df, code, page, totalpage) if int(page) <= int(totalpage) else df
